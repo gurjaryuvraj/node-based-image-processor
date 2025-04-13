@@ -22,6 +22,9 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Node Based Image Processor")
         self.setGeometry(100, 100, 1200, 800)
+
+        #menu bar
+        self.create_menu_bar()
         
         #main window and divider horizontal divider
         main_widget = QWidget()
@@ -45,7 +48,226 @@ class MainWindow(QMainWindow):
         
         main_layout.addWidget(splitter)
         self.statusBar().showMessage("Ready")
+
+        #connect signals
+        self.canvas.node_selected.connect(self.properties_panel.set_selected_node)
+
         self.show()
+
+    def create_menu_bar(self):
+        """Create the application menu bar."""
+        #file menu
+        file_menu = self.menuBar().addMenu("File")
+        
+        # New action
+        new_action = QAction("New", self)
+        new_action.setShortcut("Ctrl+N")
+        new_action.triggered.connect(self.new_project)
+        file_menu.addAction(new_action)
+        
+        # Open action
+        open_action = QAction("Open Image", self)
+        open_action.setShortcut("Ctrl+O")
+        open_action.triggered.connect(self.open_image)
+        file_menu.addAction(open_action)
+        
+        # Save action
+        save_action = QAction("Save Result", self)
+        save_action.setShortcut("Ctrl+S")
+        save_action.triggered.connect(self.save_result)
+        file_menu.addAction(save_action)
+        
+        file_menu.addSeparator()
+        
+        # Exit action
+        exit_action = QAction("Exit", self)
+        exit_action.setShortcut("Ctrl+Q")
+        exit_action.triggered.connect(self.close)
+        file_menu.addAction(exit_action)
+        
+        # Edit menu
+        edit_menu = self.menuBar().addMenu("Edit")
+        
+        # Delete node action
+        delete_action = QAction("Delete Node", self)
+        delete_action.setShortcut("Delete")
+        delete_action.triggered.connect(self.delete_selected_node)
+        edit_menu.addAction(delete_action)
+        
+        # Node menu
+        node_menu = self.menuBar().addMenu("Node")
+        
+        # Basic nodes submenu
+        basic_menu = node_menu.addMenu("Basic Nodes")
+        
+        # Add Image Input Node action
+        add_input_action = QAction("Image Input", self)
+        add_input_action.triggered.connect(lambda: self.add_node("image_input"))
+        basic_menu.addAction(add_input_action)
+        
+        # Add Output Node action
+        add_output_action = QAction("Output", self)
+        add_output_action.triggered.connect(lambda: self.add_node("output"))
+        basic_menu.addAction(add_output_action)
+        
+        # Intermediate nodes submenu
+        intermediate_menu = node_menu.addMenu("Intermediate Nodes")
+        
+        # Advanced nodes submenu
+        advanced_menu = node_menu.addMenu("Advanced Nodes")
+        
+        # Help menu
+        help_menu = self.menuBar().addMenu("Help")
+        
+        # About action
+        about_action = QAction("About", self)
+        about_action.triggered.connect(self.show_about)
+        help_menu.addAction(about_action)
+    
+    def new_project(self):
+        """Create a new project."""
+        # Ask for confirmation if there are nodes in the graph
+        if len(self.node_graph.nodes) > 0:
+            reply = QMessageBox.question(
+                self, "New Project", 
+                "Are you sure you want to create a new project? All unsaved changes will be lost.",
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+            )
+            
+            if reply == QMessageBox.No:
+                return
+        
+        # Clear the node graph
+        self.node_graph.clear()
+        
+        # Update the canvas
+        self.canvas.update()
+        
+        # Update the properties panel
+        self.properties_panel.set_selected_node(None)
+        
+        # Update status bar
+        self.statusBar().showMessage("New project created")
+    
+    def open_image(self):
+        """Open an image file and create an Image Input Node."""
+        # Open file dialog
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Open Image", "", "Image Files (*.png *.jpg *.jpeg *.bmp)"
+        )
+        
+        if file_path:
+            # Create an Image Input Node
+            node = self.node_graph.create_node("image_input")
+            
+            # Set the file path
+            node.set_parameter("file_path", file_path)
+            
+            # Position the node
+            node.set_position(100, 100)
+            
+            # Update the canvas
+            self.canvas.update()
+            
+            # Select the new node
+            self.canvas.select_node(node.id)
+            
+            # Update status bar
+            self.statusBar().showMessage(f"Opened image: {file_path}")
+
+
+    def save_result(self):
+        """Save the result of an Output Node."""
+        # Find an Output Node
+        output_nodes = [node for node in self.node_graph.nodes.values() 
+                        if node.__class__.__name__ == "OutputNode"]
+        
+        if not output_nodes:
+            QMessageBox.warning(
+                self, "No Output Node", 
+                "Please add an Output Node to save results."
+            )
+            return
+        
+        # Use the first Output Node
+        output_node = output_nodes[0]
+        
+        # Open file dialog
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Save Result", "", "PNG Files (*.png);;JPEG Files (*.jpg);;BMP Files (*.bmp)"
+        )
+        
+        if file_path:
+            # Set the file path
+            output_node.set_parameter("file_path", file_path)
+            
+            # Determine format from file extension
+            ext = file_path.split(".")[-1].lower()
+            if ext in ["jpg", "jpeg"]:
+                output_node.set_parameter("format", "jpg")
+            elif ext == "png":
+                output_node.set_parameter("format", "png")
+            elif ext == "bmp":
+                output_node.set_parameter("format", "bmp")
+            
+            # Process the node
+            output_node.process()
+            
+            # Save the image
+            success = output_node.save_image()
+            
+            if success:
+                self.statusBar().showMessage(f"Saved result to: {file_path}")
+            else:
+                QMessageBox.warning(
+                    self, "Save Failed", 
+                    "Failed to save the result. Please check the connections and try again."
+                )
+    
+    def add_node(self, node_type):
+        """Add a new node to the graph."""
+        # Create the node
+        node = self.node_graph.create_node(node_type)
+        
+        if node:
+            # Position the node at the center of the visible canvas
+            canvas_center = self.canvas.rect().center()
+            node.set_position(canvas_center.x(), canvas_center.y())
+            
+            # Update the canvas
+            self.canvas.update()
+            
+            # Select the new node
+            self.canvas.select_node(node.id)
+            
+            # Update status bar
+            self.statusBar().showMessage(f"Added {node.name} node")
+    
+    def delete_selected_node(self):
+        """Delete the selected node."""
+        selected_node_id = self.canvas.selected_node_id
+        
+        if selected_node_id:
+            # Remove the node from the graph
+            self.node_graph.remove_node(selected_node_id)
+            
+            # Update the canvas
+            self.canvas.update()
+            
+            # Clear the selection
+            self.canvas.select_node(None)
+            
+            # Update status bar
+            self.statusBar().showMessage("Node deleted")
+    
+    def show_about(self):
+        """Show the about dialog."""
+        QMessageBox.about(
+            self, "About Node-Based Image Processor",
+            "Node-Based Image Processor\n\n"
+            "A Python application for image manipulation using a node-based interface.\n\n"
+            "Created by Yuvraj."
+        )
 
 def main():
     """Main application entry point."""
