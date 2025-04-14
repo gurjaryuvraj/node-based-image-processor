@@ -7,12 +7,12 @@ class Node:
 
         self.id = id or str(uuid.uuid4())
         self.name = name
-        self.inputs = {}  # dictionary of input connections 
-        self.outputs = {}  # dictionary of output 
-        self.parameters = {}  # node parameters
-        self.position = (0, 0)  # Position on canvas
-        self.processed_data = {}  # Cache for processed results {output_name: data}
-        self.dirty = True  # Flag to indicate if reprocessing is needed
+        self.inputs = {}  
+        self.outputs = {}  
+        self.parameters = {}  
+        self.position = (0, 0)  
+        self.processed_data = {}  
+        self.dirty = True  
     
     def process(self):
         raise NotImplementedError(
@@ -50,13 +50,11 @@ class Node:
             
         source_node, output_name = self.inputs[input_name]
         
-        # If the source node is dirty, process it first
         if source_node.dirty:
             success = source_node.process()
             if not success:
                 return None
         
-        # Return the processed data from the source node
         if output_name in source_node.processed_data:
             return source_node.processed_data[output_name]
         return None

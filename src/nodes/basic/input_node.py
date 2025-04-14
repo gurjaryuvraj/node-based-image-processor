@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from src.node import Node
 
-class ImageInputNode(Node):
+class InputNode(Node):
 
     def __init__(self, name="Image Input", id=None):
         
@@ -11,16 +11,16 @@ class ImageInputNode(Node):
         
         #outputs
         self.outputs = {
-            "image": "image",  # Main image output
+            "image": "image",  
         }
         
         #parameters
         self.parameters = {
             "file_path": "", 
-            "preserve_alpha": True,  # Whether to preserve alpha channel if present
+            "preserve_alpha": True,  
         }
         
-        # Initialize processed data
+        #initialize processed data
         self.processed_data = {
             "image": None,
             "metadata": None
@@ -36,25 +36,22 @@ class ImageInputNode(Node):
             return False
         
         try:
-            # Load the image
             if self.parameters["preserve_alpha"]:
-                # Load with alpha channel if available
                 image = cv2.imread(file_path, cv2.IMREAD_UNCHANGED)
             else:
-                # Load without alpha channel
                 image = cv2.imread(file_path, cv2.IMREAD_COLOR)
             
             if image is None:
                 print(f"Error: Failed to load image: {file_path}")
                 return False
             
-            # Convert BGR to RGB (OpenCV loads as BGR)
+            #convert BGR to RGB 
             if len(image.shape) == 3 and image.shape[2] == 3:
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             elif len(image.shape) == 3 and image.shape[2] == 4:
                 image = cv2.cvtColor(image, cv2.COLOR_BGRA2RGBA)
             
-            # Extract metadata
+            #extract metadata
             height, width = image.shape[:2]
             channels = 1 if len(image.shape) == 2 else image.shape[2]
             file_size = os.path.getsize(file_path)
@@ -68,11 +65,9 @@ class ImageInputNode(Node):
             }
 
             
-            # Store the results
             self.processed_data["image"] = image
             self.processed_data["metadata"] = metadata
             
-            # Mark as not dirty
             self.dirty = False
             
             return True

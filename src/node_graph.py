@@ -1,11 +1,11 @@
 import networkx as nx
-from src.nodes.basic.image_input_node import ImageInputNode
+from src.nodes.basic.input_node import InputNode
 from src.nodes.basic.output_node import OutputNode
 
 class NodeGraph:
     
     def __init__(self):
-        self.nodes = {}  # Dictionary of nodes by ID
+        self.nodes = {} 
         self.execution_order = []
     
     def add_node(self, node):
@@ -25,7 +25,6 @@ class NodeGraph:
             return False
         
         
-        #remove the node
         del self.nodes[node_id]
         self.update_execution_order()
         return True
@@ -44,7 +43,6 @@ class NodeGraph:
         target_node = self.nodes[target_node_id]
         
         
-        # Make the connection
         success = target_node.connect_input(input_name, source_node, output_name)
         
         if success:
@@ -68,21 +66,17 @@ class NodeGraph:
     
     def update_execution_order(self):
         try:
-            # Create a directed graph
             graph = nx.DiGraph()
             
-            # Add all nodes
             for node_id in self.nodes:
                 graph.add_node(node_id)
             
-            # Add edges for connections
             for node_id, node in self.nodes.items():
                 for input_name, connection in node.inputs.items():
                     if connection:
                         source_node, _ = connection
                         graph.add_edge(source_node.id, node_id)
             
-            # Perform topological sort
             self.execution_order = list(nx.topological_sort(graph))
             return True
             
@@ -102,15 +96,12 @@ class NodeGraph:
                 return False
         
         if output_node_id:
-            # Execute only the nodes needed for the specified output node
             if output_node_id not in self.nodes:
                 print(f"Error: Output node with ID {output_node_id} does not exist")
                 return False
             
-            # Process the output node, which will recursively process its inputs
             return self.nodes[output_node_id].process()
         else:
-            # Execute all nodes in order
             success = True
             for node_id in self.execution_order:
                 if not self.nodes[node_id].process():
@@ -127,7 +118,7 @@ class NodeGraph:
         
         try:
             if node_type == "image_input":
-                node = ImageInputNode()
+                node = InputNode()
             elif node_type == "output":
                 node = OutputNode()
             else:

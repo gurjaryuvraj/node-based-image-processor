@@ -11,7 +11,7 @@ class OutputNode(Node):
         
         #inputs
         self.inputs = {
-            "image": None  # Input image connection
+            "image": None  
         }
         
         #outputs
@@ -21,42 +21,25 @@ class OutputNode(Node):
         
         #parameters
         self.parameters = {
-            "file_path_save": "",  # Path to save the image
+            "file_path_save": "",  
             "format": "png",
-            "quality": 95,    # Quality for jpg format (0-100)
-            "preview": None    # Preview of the final image
+            "quality": 95,    
+            "preview": None   
         }
 
     def process(self):
-        """
-        Process the input image and prepare for saving.
-        
-        Returns:
-            bool: True if processing was successful, False otherwise
-        """
-        # Get input image
         input_image = self.get_input_data("image")
         
         if input_image is None:
             print("Error: No input image connected")
             return False
         
-        # Store the preview
         self.parameters["preview"] = input_image
-        
-        # Mark as not dirty
         self.dirty = False
         
         return True
     
     def save_image(self):
-        """
-        Save the processed image to disk.
-        
-        Returns:
-            bool: True if saving was successful, False otherwise
-        """
-        # Process if dirty
         if self.dirty:
             success = self.process()
             if not success:
@@ -67,7 +50,7 @@ class OutputNode(Node):
             print("Error: No file path specified")
             return False
         
-        # Create directory if it doesn't exist
+        #create directory if it doesn't exist
         directory = os.path.dirname(file_path)
         if directory and not os.path.exists(directory):
             try:
@@ -76,14 +59,13 @@ class OutputNode(Node):
                 print(f"Error creating directory: {str(e)}")
                 return False
         
-        # Get the image to save
         image = self.parameters.get("preview")
         if image is None:
             print("Error: No processed image available")
             return False
         
         try:
-            # Convert to BGR for OpenCV
+            #xonvert to BGR for OpenCV
             if len(image.shape) == 3 and image.shape[2] == 3:
                 save_image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
             elif len(image.shape) == 3 and image.shape[2] == 4:
@@ -91,7 +73,7 @@ class OutputNode(Node):
             else:
                 save_image = image
             
-            # Save with appropriate format and quality
+            #save with appropriate format and quality
             format_lower = self.parameters["format"].lower()
             
             if format_lower == "jpg" or format_lower == "jpeg":
@@ -113,12 +95,7 @@ class OutputNode(Node):
             return False
     
     def set_file_path(self, file_path):
-        """
-        Set the file path for saving the image.
-        
-        Args:
-            file_path (str): Path to save the image
-        """
+
         self.parameters["file_path"] = file_path
 
 
