@@ -1,6 +1,12 @@
 import networkx as nx
 from src.nodes.basic.input_node import InputNode
 from src.nodes.basic.output_node import OutputNode
+from src.nodes.basic.brightness_contrast_node import BrightnessContrastNode
+from src.nodes.basic.color_channel_splitter_node import ColorChannelSplitterNode
+from src.nodes.intermediate.blur_node import BlurNode
+from src.nodes.intermediate.blend_node import BlendNode
+from src.nodes.intermediate.threshold_node import ThresholdNode
+from src.nodes.intermediate.edge_detection_node import EdgeDetectionNode
 
 class NodeGraph:
     
@@ -121,6 +127,18 @@ class NodeGraph:
                 node = InputNode()
             elif node_type == "output":
                 node = OutputNode()
+            elif node_type == "brightness_contrast":
+                node = BrightnessContrastNode()
+            elif node_type == "color_channel_splitter":
+                node = ColorChannelSplitterNode()
+            elif node_type == "blur":
+                node = BlurNode()
+            elif node_type == "blend":
+                node = BlendNode()
+            elif node_type == "threshold":
+                node = ThresholdNode()
+            elif node_type == "edge_detection":
+                node = EdgeDetectionNode()
             else:
                 print(f"Error: Unknown node type: {node_type}")
                 return None

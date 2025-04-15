@@ -197,7 +197,23 @@ class PropertiesPanel(QScrollArea):
                         save_button.clicked.connect(self.save_result)
                     else:
                         save_button.clicked.connect(self.save_result)
+
+                elif param_name in ["blend_mode",  "threshold_type", "algorithm", "format"]:
+                    widget = QComboBox()
                     
+                    if param_name == "blend_mode":
+                        widget.addItems(["normal", "multiply", "screen", "overlay", "difference"])
+                    elif param_name == "threshold_type":
+                        widget.addItems(["binary", "adaptive", "otsu"])
+                    elif param_name == "algorithm":
+                        widget.addItems(["sobel", "canny"])
+                    elif param_name == "format":
+                        widget.addItems(["png", "jpg", "bmp"])
+
+                    widget.setCurrentText(param_value)
+                    widget.currentTextChanged.connect(
+                        lambda text, name=param_name: self.on_parameter_changed(name, text)
+                    )   
                                 
                 
                 else:
@@ -207,14 +223,72 @@ class PropertiesPanel(QScrollArea):
                     )
             
             elif isinstance(param_value, int):
-                widget = QSpinBox()
-                widget.setRange(-1000, 1000)
-                widget.setValue(param_value)
-                widget.valueChanged.connect(
-                    lambda value, name=param_name: self.on_parameter_changed(name, value)
-                )
+                if param_name == "brightness":
+                    widget = QSlider(Qt.Horizontal)
+                    widget.setRange(-100, 100)
+                    widget.setValue(param_value)
+                    widget.valueChanged.connect(
+                        lambda value, name=param_name: self.on_parameter_changed(name, value)
+                    )
+                elif param_name == "threshold_value":
+                    widget = QSlider(Qt.Horizontal)
+                    widget.setRange(0, 255)
+                    widget.setValue(param_value)
+                    widget.valueChanged.connect(
+                        lambda value, name=param_name: self.on_parameter_changed(name, value)
+                    )
+                
+                elif param_name == "radius" or param_name == "block_size":
+                    widget = QSpinBox()
+                    widget.setRange(1, 20)
+                    widget.setValue(param_value)
+                    widget.valueChanged.connect(
+                        lambda value, name=param_name: self.on_parameter_changed(name, value)
+                    )
+
+                else:
+                    widget = QSpinBox()
+                    widget.setRange(-1000, 1000)
+                    widget.setValue(param_value)
+                    widget.valueChanged.connect(
+                        lambda value, name=param_name: self.on_parameter_changed(name, value)
+                    ) 
+            elif isinstance(param_value, float):
+                # Special handling for specific parameters
+                if param_name == "contrast":
+                    widget = QDoubleSpinBox()
+                    widget.setRange(0, 3)
+                    widget.setSingleStep(0.1)
+                    widget.setValue(param_value)
+                    widget.valueChanged.connect(
+                        lambda value, name=param_name: self.on_parameter_changed(name, value)
+                    )
+                elif param_name == "opacity":
+                    widget = QDoubleSpinBox()
+                    widget.setRange(0, 1)
+                    widget.setSingleStep(0.1)
+                    widget.setValue(param_value)
+                    widget.valueChanged.connect(
+                        lambda value, name=param_name: self.on_parameter_changed(name, value)
+                    )
+                else:
+                    widget = QDoubleSpinBox()
+                    widget.setRange(-1000, 1000)
+                    widget.setSingleStep(0.1)
+                    widget.setValue(param_value)
+                    widget.valueChanged.connect(
+                        lambda value, name=param_name: self.on_parameter_changed(name, value)
+                    )
             
-            
+            elif isinstance(param_value, list):
+                # Special handling for color parameters
+                if param_name == "overlay_color" and len(param_value) == 3:
+                    widget = QPushButton()
+                    color = QColor(param_value[0], param_value[1], param_value[2])
+                    widget.setStyleSheet(f"background-color: rgb({color.red()}, {color.green()}, {color.blue()});")
+                    widget.clicked.connect(
+                        lambda _, name=param_name: self.choose_color(name)
+                    )
             
             else:
                 widget = QLabel(str(param_value))
@@ -223,7 +297,19 @@ class PropertiesPanel(QScrollArea):
             
             self.parameter_widgets[param_name] = widget
 
-        if self.selected_node.processed_data :
+            # Add reset button for certain parameters
+            if param_name in ["brightness", "contrast"]:
+                reset_button = QPushButton("Reset")
+                if param_name == "brightness":
+                    reset_button.clicked.connect(self.selected_node.reset_brightness)
+                    reset_button.clicked.connect(lambda: self.update_widget_value(param_name, 0))
+                elif param_name == "contrast":
+                    reset_button.clicked.connect(self.selected_node.reset_contrast)
+                    reset_button.clicked.connect(lambda: self.update_widget_value(param_name, 1.0))
+                
+                self.params_layout.addRow("", reset_button)
+
+        if "metadata" in self.selected_node.processed_data:
             if self.selected_node.processed_data["metadata"]:
                 for metadata_name, metadata_value in self.selected_node.processed_data["metadata"].items():
                     
@@ -449,5 +535,24 @@ class PropertiesPanel(QScrollArea):
                 self, "Save Failed", 
                 "path not defined"
             )
+    def choose_color(self, param_name):
+        from PyQt5.QtWidgets import QColorDialog
+        
+        if self.selected_node:
+            current_color = self.selected_node.parameters.get(param_name, [0, 0, 0])
+            color = QColor(current_color[0], current_color[1], current_color[2])
+            
+            new_color = QColorDialog.getColor(color, self, "Choose Color")
+            
+            if new_color.isValid():
+                color_list = [new_color.red(), new_color.green(), new_color.blue()]
+                self.selected_node.set_parameter(param_name, color_list)
+                
+                button = self.parameter_widgets.get(param_name)
+                if button:
+                    button.setStyleSheet(
+                        f"background-color: rgb({new_color.red()}, {new_color.green()}, {new_color.blue()});"
+                    )
+
     
     

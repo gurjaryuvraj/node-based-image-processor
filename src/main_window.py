@@ -108,9 +108,39 @@ class MainWindow(QMainWindow):
         add_output_action = QAction("Output", self)
         add_output_action.triggered.connect(lambda: self.add_node("output"))
         basic_menu.addAction(add_output_action)
+
+        #add Brightness/Contrast Node action
+        add_brightness_action = QAction("Brightness/Contrast", self)
+        add_brightness_action.triggered.connect(lambda: self.add_node("brightness_contrast"))
+        basic_menu.addAction(add_brightness_action)
+
+         #add Color Channel Splitter Node action
+        add_channel_splitter_action = QAction("Color Channel Splitter", self)
+        add_channel_splitter_action.triggered.connect(lambda: self.add_node("color_channel_splitter"))
+        basic_menu.addAction(add_channel_splitter_action)
         
         #intermediate nodes submenu
         intermediate_menu = node_menu.addMenu("Intermediate Nodes")
+
+        #add Blur Node action
+        add_blur_action = QAction("Blur", self)
+        add_blur_action.triggered.connect(lambda: self.add_node("blur"))
+        intermediate_menu.addAction(add_blur_action)
+
+         #add Blend Node action
+        add_blend_action = QAction("Blend", self)
+        add_blend_action.triggered.connect(lambda: self.add_node("blend"))
+        intermediate_menu.addAction(add_blend_action)
+
+        #add Threshold Node action
+        add_threshold_action = QAction("Threshold", self)
+        add_threshold_action.triggered.connect(lambda: self.add_node("threshold"))
+        intermediate_menu.addAction(add_threshold_action)
+        
+        #add Edge Detection Node action
+        add_edge_detection_action = QAction("Edge Detection", self)
+        add_edge_detection_action.triggered.connect(lambda: self.add_node("edge_detection"))
+        intermediate_menu.addAction(add_edge_detection_action)
         
         #advanced nodes submenu
         advanced_menu = node_menu.addMenu("Advanced Nodes")

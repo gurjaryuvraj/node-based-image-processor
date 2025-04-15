@@ -51,8 +51,9 @@ class NodeCanvas(QWidget):
         
         #initialize hover state
         self.hover_node_id = None
-        self.hover_connector = None  # (node_id, connector_name, is_input)
-    
+        self.hover_connector = None  
+
+
     def paintEvent(self, event):
 
         painter = QPainter(self)
@@ -141,7 +142,7 @@ class NodeCanvas(QWidget):
         node_rect = QRectF(
             x, y, 
             self.node_width, 
-            self.node_header_height + self.node_content_height
+            self.node_header_height + 20 + (max(len(node.outputs), len(node.inputs))) * 25
         )
         
         painter.setPen(Qt.NoPen)
